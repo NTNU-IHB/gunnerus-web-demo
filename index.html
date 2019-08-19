@@ -1,0 +1,215 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <title>Gunnerus trajectory following demo</title>
+  <meta charset="utf-8">
+  <style>
+    body {
+      color: #000;
+      font-family: Monospace;
+      font-size: 13px;
+      margin: 0px;
+      overflow: hidden;
+    }
+
+    a {
+      color: #a06851;
+    }
+  </style>
+
+
+</head>
+
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
+
+<script src="js/Sky.js"></script>
+<script src="js/Water.js"></script>
+<script src="js/GLTFLoader.js"></script>
+<script src="js/OrbitControls.js"></script>
+
+<script src="js/dat.gui.min.js"></script>
+
+<script src="js/Trajectory.js"></script>
+
+<script>
+
+    let container;
+    let camera, scene, renderer;
+
+    let water, oceanGeom;
+
+    let gunnerus, traj, prev, next;
+
+    let params = {
+        speed: 1
+    };
+
+    let gui = new dat.GUI();
+
+    let folder = gui.addFolder('Settings');
+    folder.add(params, 'speed', 1, 100);
+    folder.open();
+
+    let t = 0;
+
+    init();
+    animate();
+
+    function init() {
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        renderer = new THREE.WebGLRenderer();
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 30000);
+        camera.position.set(250, 100, 250);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.userPan = false;
+        controls.userPanSpeed = 0.0;
+        controls.maxDistance = 1000.0;
+        controls.maxPolarAngle = Math.PI * 0.495;
+        controls.target.set(0, 0, 0);
+
+        let light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(1, 1, -1);
+        scene.add(light);
+
+        let sky = new THREE.Sky();
+        sky.scale.setScalar(10000);
+        sky.material.uniforms.sunPosition.value = light.position
+        scene.add(sky)
+
+        let waterNormals = new THREE.TextureLoader().load('textures/waternormals.jpg');
+        waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
+
+        oceanGeom = new THREE.PlaneGeometry( 10000, 10000 , 100, 100);
+        water = new THREE.Water(oceanGeom, {
+            textureWidth: 512,
+            textureHeight: 512,
+            waterNormals: waterNormals,
+            alpha: 0.9,
+            sunDirection: light.position.clone().normalize(),
+            sunColor: 0xffffff,
+            waterColor: 0x001e0f,
+            distortionScale: 50.0,
+        });
+
+        water.rotation.x = - Math.PI * 0.5;
+        scene.add( water );
+
+        let gltfLoader = new THREE.GLTFLoader()
+        gltfLoader.load("models/Gunnerus.glb", function(gltf) {
+
+            gunnerus = gltf.scene
+            // gunnerus.scale.multiplyScalar(10)
+            scene.add(gunnerus)
+
+        });
+
+        traj = new ActualTrajectory(function(positions){
+
+            let lineMaterial = new THREE.LineBasicMaterial({
+                color: 0x00ff00
+            });
+            let lineGeometry = new THREE.Geometry();
+            for (let i = 0; i < positions.length; i++) {
+                let v = new THREE.Vector3().copy(positions[i]);
+                v.y = 1;
+                lineGeometry.vertices.push(v);
+            }
+
+            scene.add(new THREE.Line(lineGeometry, lineMaterial));
+        });
+
+        new TargetTrajectory(function(positions){
+
+            let lineMaterial = new THREE.LineBasicMaterial({
+                color: 0x0000ff
+            });
+            let lineGeometry = new THREE.Geometry();
+            for (let i = 0; i < positions.length; i++) {
+                let v = new THREE.Vector3().copy(positions[i]);
+                v.y = 1;
+                lineGeometry.vertices.push(v);
+            }
+
+            scene.add(new THREE.Line(lineGeometry, lineMaterial));
+        });
+
+
+    }
+
+    function animate() {
+
+       if (gunnerus) {
+
+           if (traj) {
+
+               if (!next) {
+                   prev = traj.next();
+                   next = traj.next();
+               }
+
+               gunnerus.position.lerpVectors(prev[0], next[0], t)
+               THREE.Quaternion.slerp(prev[1], prev[1], gunnerus.quaternion, t)
+
+               if (t < 1) {
+                   t += params.speed;
+                   if (t > 1) {
+                       t = 1;
+                   }
+               } else {
+                   t = params.speed;
+                   prev = next;
+                   next = traj.next();
+               }
+
+           }
+       }
+
+        requestAnimationFrame(animate);
+        render();
+    }
+
+    function render() {
+
+        water.material.uniforms.time.value += 1.0 / 60.0;
+
+        var time = performance.now() * 0.001;
+
+        for ( var i = 0; i < oceanGeom.vertices.length; i+=1 ) {
+            var vertex = oceanGeom.vertices[i];
+            vertex.z = 2 * Math.sin(2 * Math.PI * 0.2 * time + i);
+        }
+
+        oceanGeom.verticesNeedUpdate = true;
+
+        renderer.render(scene, camera);
+
+    }
+
+    window.addEventListener( 'resize', onWindowResize, false );
+
+    function onWindowResize(){
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+    }
+
+
+</script>
+
+</body>
+
+</html>
