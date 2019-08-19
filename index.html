@@ -78,13 +78,17 @@
         controls.maxPolarAngle = Math.PI * 0.495;
         controls.target.set(0, 0, 0);
 
-        let light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(1, 1, -1);
-        scene.add(light);
+        let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(1, 1, -1);
+        scene.add(directionalLight);
+
+        let ambientLight = new THREE.AmbientLight()
+        ambientLight.intensity = 0.8
+        scene.add(ambientLight)
 
         let sky = new THREE.Sky();
         sky.scale.setScalar(10000);
-        sky.material.uniforms.sunPosition.value = light.position
+        sky.material.uniforms.sunPosition.value = directionalLight.position
         scene.add(sky)
 
         let waterNormals = new THREE.TextureLoader().load('textures/waternormals.jpg');
@@ -96,7 +100,7 @@
             textureHeight: 512,
             waterNormals: waterNormals,
             alpha: 0.9,
-            sunDirection: light.position.clone().normalize(),
+            sunDirection: directionalLight.position.clone().normalize(),
             sunColor: 0xffffff,
             waterColor: 0x001e0f,
             distortionScale: 50.0,
