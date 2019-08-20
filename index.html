@@ -44,13 +44,22 @@
     let gunnerus, traj, prev, next;
 
     let params = {
-        speed: 0.5
+        speed: 0.5,
+        follow: true
     };
 
     let gui = new dat.GUI();
 
     let folder = gui.addFolder('Settings');
     folder.add(params, 'speed', 0.1, 1);
+    let followController = folder.add(params, 'follow');
+    followController.onChange(function (value) {
+       if (!value) {
+           controls.target = controls.target.clone()
+       } else {
+           controls.target = gunnerus.position
+       }
+    });
     folder.open();
 
     let t = 0;
@@ -196,7 +205,11 @@
 
         oceanGeom.verticesNeedUpdate = true;
 
-        controls.update();
+
+        if (params.follow) {
+            controls.update();
+        }
+
         renderer.render(scene, camera);
 
     }
