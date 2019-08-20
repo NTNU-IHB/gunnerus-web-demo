@@ -44,14 +44,14 @@
     let gunnerus, traj, prev, next;
 
     let params = {
-        speed: 1
+        speed: 0.5
     };
 
     let gui = new dat.GUI();
 
-    // let folder = gui.addFolder('Settings');
-    // folder.add(params, 'speed', 0.1, 1);
-    // folder.open();
+    let folder = gui.addFolder('Settings');
+    folder.add(params, 'speed', 0.1, 1);
+    folder.open();
 
     let t = 0;
 

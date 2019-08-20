@@ -49,7 +49,7 @@ function ActualTrajectory(onReady) {
   readTextFile("data/actual.csv", function (data) {
 
     let lines = data.split("\n");
-    for (var i = 1000; i < lines.length - 1; i++) {
+    for (var i = 1000; i < lines.length - 1; i+=5) {
 
       var line = lines[i];
       var split = line.split(",");
