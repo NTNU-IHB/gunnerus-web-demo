@@ -113,7 +113,7 @@
         gltfLoader.load("models/Gunnerus.glb", function(gltf) {
 
             gunnerus = gltf.scene
-            // gunnerus.scale.multiplyScalar(10)
+            controls.target = gunnerus.position
             scene.add(gunnerus)
 
         });
@@ -196,6 +196,7 @@
 
         oceanGeom.verticesNeedUpdate = true;
 
+        controls.update();
         renderer.render(scene, camera);
 
     }
