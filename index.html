@@ -121,8 +121,8 @@
         let gltfLoader = new THREE.GLTFLoader()
         gltfLoader.load("models/Gunnerus.glb", function(gltf) {
 
-            gunnerus = gltf.scene
-            controls.target = gunnerus.position
+            gunnerus = gltf.scene;
+            controls.target = gunnerus.position;
             scene.add(gunnerus)
 
         });
@@ -153,8 +153,12 @@
                 v.y = 1;
                 lineGeometry.vertices.push(v);
             }
+            lineGeometry.vertices.push(lineGeometry.vertices[0]);
 
-            scene.add(new THREE.Line(lineGeometry, lineMaterial));
+            let line = new THREE.Line(lineGeometry, lineMaterial);
+            line.rotateY(-Math.PI/2);
+
+            scene.add(line);
         });
 
 
